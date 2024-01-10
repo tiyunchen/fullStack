@@ -10,7 +10,10 @@ import * as session from 'express-session';
  * @param next
  * @constructor
  */
-function MiddleWareAll(req: Request, res: Response, next: NextFunction) {}
+function MiddleWareAll(req: Request, res: Response, next: NextFunction) {
+  console.log('全局中间件');
+  next();
+}
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -21,6 +24,9 @@ async function bootstrap() {
       name: 'cty',
     }),
   );
+  app.use(MiddleWareAll);
+  // 跨域设置
+  app.enableCors();
   await app.listen(3000);
 }
 bootstrap();

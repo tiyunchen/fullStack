@@ -1,7 +1,7 @@
 import { createFetch, isObject } from '@vueuse/core'
 import type {MaybeRef, UseFetchReturn} from '@vueuse/core'
 import {computed, unref} from 'vue'
-import { stringifyQuery, LocationQueryRaw } from 'vue-router'
+import { stringifyQuery } from 'vue-router'
 
 import router from '../router/index'
 
@@ -15,7 +15,8 @@ export const useMyFetch = createFetch({
         async beforeFetch({ options }) {
             const myToken = await getMyToken()
             if(options.headers) {
-                options.headers.Authorization = `Bearer ${myToken}`
+
+                (options.headers as any).Authorization = `Bearer ${myToken}`
             }
             return { options }
         },
@@ -53,7 +54,7 @@ export function useGet<T = unknown>(
         const _url = unref(url)
         const _query = unref(query)
         const queryString = isObject(_query)
-            ? stringifyQuery(_query as LocationQueryRaw)
+            ? stringifyQuery(_query as any)
             : _query || ''
         return `${_url}${queryString ? '?' : ''}${queryString}`
     })
