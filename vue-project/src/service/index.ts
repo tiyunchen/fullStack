@@ -1,9 +1,8 @@
-import { createFetch, isObject } from '@vueuse/core'
+import { isObject } from '@vueuse/core'
 import type {MaybeRef, UseFetchReturn} from '@vueuse/core'
-import {computed, unref} from 'vue'
+import {computed, reactive, ref, unref} from 'vue'
 import { stringifyQuery } from 'vue-router'
-
-import router from '../router/index'
+import {createFetch} from '@/service/useFetch'
 
 
 const getMyToken = async () => {
@@ -20,6 +19,10 @@ export const useMyFetch = createFetch({
             }
             return { options }
         },
+        async onFetchError(err){
+            console.log('请求出错', err)
+            return err
+        }
     },
     fetchOptions: {
         mode: 'cors',
@@ -37,6 +40,22 @@ export function usePost<T = unknown>(
     payload?: MaybeRef<unknown>,
 ): UseFetchReturn<T> {
     return useMyFetch<T>(url).post(payload).json()
+}
+
+
+export function usePostStream<T = unknown>(
+    url: MaybeRef<string>,
+    payload?: MaybeRef<unknown>,
+){
+    return useMyFetch<T>(url, {},{
+        afterFetch: async (res)=>{
+            // 不能调用arrary 因为 useFetch 已经调用了 arrayBuffer 进行处理了, 对于已经处理过arraybuffer的对象是不能够再次执行的
+            // const arrayBuffer = await res.response.arrayBuffer()
+            const blob = new Blob([res.data])
+            const url = URL.createObjectURL(blob)
+            return ({data: url})
+        }
+    }).post(payload).arrayBuffer<string>()
 }
 
 
