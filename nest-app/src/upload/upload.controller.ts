@@ -36,13 +36,13 @@ export class UploadController {
 
   @Get('export')
   export(@Res() res: Response) {
-    const url = path.join(__dirname, '../images/1704892877761.jpg');
+    const url = path.join(__dirname, '../../static/photo2.avif');
     res.download(url);
   }
 
   @Post('stream')
   async stream(@Res() res: Response) {
-    const url = path.join(__dirname, '../images/1704892877761.jpg');
+    const url = path.join(__dirname, '../../static/photo2.avif');
     const tarStream = new zip.Stream();
     await tarStream.addEntry(url);
     res.setHeader('Content-Type', 'application/octet-stream');
