@@ -32,6 +32,7 @@
 import { reactive, ref } from 'vue'
 import type { FormInstance, FormRules } from 'element-plus'
 import {usePost} from "@/service";
+import {watch} from "vue-demi";
 
 interface RuleForm {
     username: string
@@ -76,10 +77,16 @@ const submitForm = async (formEl: FormInstance | undefined) => {
     if (!formEl) return
     await formEl.validate(async (valid, fields) => {
         if (valid) {
+            const res = usePost('/user', ruleForm)
+            const {isFetching, data} = res
+            watch(data, ()=>{
+                console.log('监听data', data.value)
+            })
+            watch(isFetching, ()=>{
+                console.log('监听isFetching', isFetching.value)
+            })
+            console.log('sssssss', res)
 
-            const {isFetching, data} = usePost('/user', ruleForm)
-            console.log('submit!', isFetching)
-            console.log('datadatadata', data)
         } else {
             console.log('error submit!', fields)
         }
