@@ -48,6 +48,9 @@ export class UploadController {
     res.setHeader('Content-Type', 'application/octet-stream');
     res.setHeader('Context-Disposition', 'attachment;filename=cty');
     tarStream.pipe(res);
+    tarStream.on('end', function () {
+      console.log('文件结束发送');
+    });
   }
 
   @Get('')

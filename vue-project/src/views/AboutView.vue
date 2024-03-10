@@ -1,11 +1,37 @@
 <template>
     <div class="user">
         <button @click="download">下载</button>
+        <button @click="startPromise">开始promise</button>
+        <button @click="stopPromise">停止promise</button>
     </div>
 </template>
 <script setup lang="ts">
 import { usePostStream} from '@/service/index'
 import {watch} from "vue-demi";
+import {until} from '@vueuse/shared'
+import {ref} from "vue";
+  const isStart = ref<boolean | null>(null)
+  const startPromise = () => {
+      isStart.value = true
+      const fns = new Set()
+      fns.add(2)
+      fns.add(isStart)
+      console.log('ssss', fns)
+      until(isStart).toBe(false).then(res =>{
+          console.log('返回', res)
+      })
+  }
+
+
+
+
+
+
+
+  const stopPromise = ()=> {
+      isStart.value = false
+  }
+
   const download = () => {
       const {data} = usePostStream('/upload/stream')
       watch(data, ()=>{
