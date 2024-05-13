@@ -1,11 +1,24 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Patch,
+  Param,
+  Delete,
+  Inject,
+} from '@nestjs/common';
 import { ListService } from './list.service';
 import { CreateListDto } from './dto/create-list.dto';
 import { UpdateListDto } from './dto/update-list.dto';
+import type { ConfigType } from '../config/config.module';
 
 @Controller('list')
 export class ListController {
-  constructor(private readonly listService: ListService) {}
+  constructor(
+    private readonly listService: ListService,
+    @Inject('config') private readonly config: ConfigType,
+  ) {}
 
   @Post()
   create(@Body() createListDto: CreateListDto) {
@@ -14,6 +27,7 @@ export class ListController {
 
   @Get()
   findAll() {
+    console.log('sss', this.config.baseUrl);
     return this.listService.findAll();
   }
 

@@ -1,5 +1,11 @@
 <script setup lang="ts">
 import { RouterLink, RouterView } from 'vue-router'
+import {onBeforeMount} from "vue";
+import {useAppStore} from "@/stores/userAppStore";
+const appStore = useAppStore()
+onBeforeMount(()=>{
+    appStore.init()
+})
 </script>
 
 <template>

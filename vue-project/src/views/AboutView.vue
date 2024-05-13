@@ -33,12 +33,14 @@ import {ref} from "vue";
   }
 
   const download = () => {
-      const {data} = usePostStream('/upload/stream')
+      // const {data} = usePostStream('/upload/stream')
+      const {data} = usePostStream('/upload/stream2')
       watch(data, ()=>{
           console.log('监听变化', data.value)
           if(!data.value) return
           const a = document.createElement('a')
-          a.download = '测试文件.zip'
+          // a.download = '测试文件.zip'
+          a.download = 'photo2.avif'
           a.href = data.value
           a.click()
       })

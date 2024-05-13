@@ -12,42 +12,42 @@ import {
   Req,
 } from '@nestjs/common';
 import type { Request, Response } from 'express';
-
+import { JwtService } from '@nestjs/jwt';
+import { AuthJwtService } from '../common/authJwt/auth.service';
 import { UserService } from './user.service';
-import { CreateUserDto } from './dto/create-user.dto';
+import { LoginUserDto, RegisterUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 
 @Controller('user')
 export class UserController {
-  constructor(private readonly userService: UserService) {}
+  constructor(
+    private readonly userService: UserService,
+    // private readonly jwtService: JwtService,
+    private readonly authJwtService: AuthJwtService,
+  ) {}
 
-  @Post()
-  create(
-    @Req() req: Request,
-    @Body() createUserDto: CreateUserDto & { code?: string },
-    @Headers() headers: Headers,
-  ) {
-    const code = req.session.code;
+  @Post('register')
+  create(@Req() req: Request, @Body() createUserDto: RegisterUserDto) {
+    const code = req.session.verifyCode;
+    console.log('创建用户----post请求', code, createUserDto);
+    this.userService.equalVerify(req, createUserDto.code);
 
-    if (!createUserDto.code || code.toLowerCase() !== createUserDto.code) {
-      console.log('创建用户----post请求', code, createUserDto);
-      return {
-        result: false,
-        msg: '验证码不正确',
-      };
-    }
-    // return this.userService.create(createUserDto);
-    return {
-      result: true,
-      data: createUserDto,
-    };
+    return this.userService.create(createUserDto);
+  }
+
+  @Post('login')
+  login(@Req() req: Request, @Body() body: LoginUserDto) {
+    const code = req.session.verifyCode;
+    console.log('创建用户----post请求', code, body);
+    this.userService.equalVerify(req, body.code);
+    return this.userService.userLogin(body);
   }
 
   @Get('code')
-  verifyCode(@Req() req: Request, @Res() res: Response) {
-    // res.send('22222222');
-    const captcha = this.userService.verifyCode();
-    req.session.code = captcha.text;
+  verifyCodeImg(@Req() req: Request, @Res() res: Response) {
+    const captcha = this.userService.createVerifyCode();
+    // 将验证码存入到 session 里面
+    req.session.verifyCode = captcha.text;
     res.type('image/svg+xml');
     res.send(captcha.data);
   }

@@ -4,7 +4,7 @@ import type { ComputedRef, Ref } from 'vue-demi'
 import { computed, isRef, ref, shallowRef, watch } from 'vue-demi'
 const defaultWindow = window
 
-export interface UseFetchReturn<T> {
+export interface UseFetchReturn<T, R=any> {
     /**
      * Indicates if the fetch request has finished
      */
@@ -14,6 +14,13 @@ export interface UseFetchReturn<T> {
      * The statusCode of the HTTP fetch response
      */
     statusCode: Ref<number | null>
+
+    /**
+     * 是否成功
+     */
+    success: Ref<boolean>
+
+
 
     /**
      * The raw response of the fetch response
@@ -29,6 +36,11 @@ export interface UseFetchReturn<T> {
      * The fetch response body on success, may either be JSON or text
      */
     data: Ref<T | null>
+
+    /**
+     * 请求成功取出正确的数据
+     */
+    resData: Ref<R | null>
 
     /**
      * Indicates if the request is currently being fetched.
@@ -72,13 +84,13 @@ export interface UseFetchReturn<T> {
     onFetchFinally: EventHookOn
 
     // methods
-    get(): UseFetchReturn<T> & PromiseLike<UseFetchReturn<T>>
-    post(payload?: MaybeRefOrGetter<unknown>, type?: string): UseFetchReturn<T> & PromiseLike<UseFetchReturn<T>>
-    put(payload?: MaybeRefOrGetter<unknown>, type?: string): UseFetchReturn<T> & PromiseLike<UseFetchReturn<T>>
-    delete(payload?: MaybeRefOrGetter<unknown>, type?: string): UseFetchReturn<T> & PromiseLike<UseFetchReturn<T>>
-    patch(payload?: MaybeRefOrGetter<unknown>, type?: string): UseFetchReturn<T> & PromiseLike<UseFetchReturn<T>>
-    head(payload?: MaybeRefOrGetter<unknown>, type?: string): UseFetchReturn<T> & PromiseLike<UseFetchReturn<T>>
-    options(payload?: MaybeRefOrGetter<unknown>, type?: string): UseFetchReturn<T> & PromiseLike<UseFetchReturn<T>>
+    get(): UseFetchReturn<T, R> & PromiseLike<UseFetchReturn<T,R>>
+    post(payload?: MaybeRefOrGetter<unknown>, type?: string): UseFetchReturn<T,R> & PromiseLike<UseFetchReturn<T,R>>
+    put(payload?: MaybeRefOrGetter<unknown>, type?: string): UseFetchReturn<T,R> & PromiseLike<UseFetchReturn<T,R>>
+    delete(payload?: MaybeRefOrGetter<unknown>, type?: string): UseFetchReturn<T,R> & PromiseLike<UseFetchReturn<T,R>>
+    patch(payload?: MaybeRefOrGetter<unknown>, type?: string): UseFetchReturn<T,R> & PromiseLike<UseFetchReturn<T,R>>
+    head(payload?: MaybeRefOrGetter<unknown>, type?: string): UseFetchReturn<T,R> & PromiseLike<UseFetchReturn<T,R>>
+    options(payload?: MaybeRefOrGetter<unknown>, type?: string): UseFetchReturn<T,R> & PromiseLike<UseFetchReturn<T,R>>
 
     // type
     json<JSON = any>(): UseFetchReturn<JSON> & PromiseLike<UseFetchReturn<JSON>>
@@ -313,11 +325,11 @@ export function createFetch(config: CreateFetchOptions = {}) {
     return useFactoryFetch as typeof useFetch
 }
 
-export function useFetch<T>(url: MaybeRefOrGetter<string>): UseFetchReturn<T> & PromiseLike<UseFetchReturn<T>>
-export function useFetch<T>(url: MaybeRefOrGetter<string>, useFetchOptions: UseFetchOptions): UseFetchReturn<T> & PromiseLike<UseFetchReturn<T>>
-export function useFetch<T>(url: MaybeRefOrGetter<string>, options: RequestInit, useFetchOptions?: UseFetchOptions): UseFetchReturn<T> & PromiseLike<UseFetchReturn<T>>
+export function useFetch<T, R>(url: MaybeRefOrGetter<string>): UseFetchReturn<T,R> & PromiseLike<UseFetchReturn<T, R>>
+export function useFetch<T, R>(url: MaybeRefOrGetter<string>, useFetchOptions: UseFetchOptions): UseFetchReturn<T,R> & PromiseLike<UseFetchReturn<T,R>>
+export function useFetch<T, R>(url: MaybeRefOrGetter<string>, options: RequestInit, useFetchOptions?: UseFetchOptions): UseFetchReturn<T,R> & PromiseLike<UseFetchReturn<T,R>>
 
-export function useFetch<T>(url: MaybeRefOrGetter<string>, ...args: any[]): UseFetchReturn<T> & PromiseLike<UseFetchReturn<T>> {
+export function useFetch<T,R>(url: MaybeRefOrGetter<string>, ...args: any[]): UseFetchReturn<T,R> & PromiseLike<UseFetchReturn<T,R>> {
     const supportsAbort = typeof AbortController === 'function'
 
     let fetchOptions: RequestInit = {}
@@ -371,9 +383,11 @@ export function useFetch<T>(url: MaybeRefOrGetter<string>, ...args: any[]): UseF
     const isFetching = ref(false)
     const aborted = ref(false)
     const statusCode = ref<number | null>(null)
+    const success = ref(false)
     const response = shallowRef<Response | null>(null)
     const error = shallowRef<any>(null)
     const data = shallowRef<T | null>(initialData || null)
+    const resData = shallowRef<R | null>(initialData || null)
 
     const canAbort = computed(() => supportsAbort && isFetching.value)
 
@@ -408,6 +422,7 @@ export function useFetch<T>(url: MaybeRefOrGetter<string>, ...args: any[]): UseF
         loading(true)
         error.value = null
         statusCode.value = null
+        success.value = false
         aborted.value = false
 
         executeCounter += 1
@@ -477,6 +492,7 @@ export function useFetch<T>(url: MaybeRefOrGetter<string>, ...args: any[]): UseF
                     // see: https://www.tjvantoll.com/2015/09/13/fetch-and-errors/
                     if (!fetchResponse.ok) {
                         data.value = initialData || null
+                        resData.value = initialData || null
                         throw new Error(fetchResponse.statusText)
                     }
 
@@ -488,7 +504,8 @@ export function useFetch<T>(url: MaybeRefOrGetter<string>, ...args: any[]): UseF
                         }))
                     }
                     data.value = responseData
-
+                    success.value = responseData.success
+                    resData.value = responseData.data
                     responseEvent.trigger(fetchResponse)
                     return resolve(fetchResponse)
                 })
@@ -536,9 +553,11 @@ export function useFetch<T>(url: MaybeRefOrGetter<string>, ...args: any[]): UseF
     const shell: UseFetchReturn<T> = {
         isFinished,
         statusCode,
+        success,
         response,
         error,
         data,
+        resData,
         isFetching,
         canAbort,
         aborted,

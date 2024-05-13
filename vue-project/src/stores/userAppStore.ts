@@ -1,12 +1,26 @@
-import { ref, computed } from 'vue'
+import {ref, computed, reactive} from 'vue'
 import { defineStore } from 'pinia'
+import {getMyToken, usePost} from "@/service";
 
-export const useCounterStore = defineStore('app', () => {
-    const count = ref(0)
-    const doubleCount = computed(() => count.value * 2)
-    function increment() {
-        count.value++
+interface APP_STATE {
+    isLogin: boolean,
+}
+export const useAppStore = defineStore('app', {
+    state: (): APP_STATE=>{
+        return {
+            isLogin: false,
+        }
+    },
+    actions: {
+        /**
+         * 页面加载初始化
+         */
+        async init(){
+            const token = await getMyToken()
+            this.isLogin = !!token
+        }
     }
-
-    return { count, doubleCount, increment }
 })
+
+
+

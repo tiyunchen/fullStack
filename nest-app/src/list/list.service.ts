@@ -1,9 +1,11 @@
-import { Injectable } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 import { CreateListDto } from './dto/create-list.dto';
 import { UpdateListDto } from './dto/update-list.dto';
+import { ConfigType } from '../config/config.module';
 
 @Injectable()
 export class ListService {
+  constructor(@Inject('config') private readonly config: ConfigType) {}
   create(createListDto: CreateListDto) {
     return 'This action adds a new list';
   }

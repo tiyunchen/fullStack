@@ -18,6 +18,7 @@ import { Request } from 'express';
         ) {
           const filename =
             new Date().getTime() + path.extname(file.originalname);
+          console.log('文件临时路径', file.originalname);
           return callback(null, filename);
         },
       }),
